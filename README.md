@@ -28,13 +28,30 @@ POST /api/v1/reservas/{id}/expirar
 
 ```
 worker-core/       the job and the port to Booking — NO Spring dependency
+worker-adapters/   the scheduler (one X-Correlation-Id per run) and the HTTP client of Booking
+worker-app/        the composition root: every limit, with its default
+deploy/            Dockerfile and this service's compose file (no port: it receives no requests)
 ```
 
 ## Run
 
 ```bash
 mvn -B verify
+SERVICE_TOKEN=<svc-worker token> BOOKING_URL=http://localhost:3001 java -jar worker-app/target/worker-app-0.1.0.jar
 ```
+
+Without `SERVICE_TOKEN` it does not start. In the platform the token comes from
+`WORKER_SERVICE_TOKEN` (`property-infra-postgres`; in develop, `scripts/dev-keys.sh`).
+
+| Variable | Default | What it bounds |
+|---|---|---|
+| `PENDING_TTL` | `15m` | How long a Reserva may stay `PENDIENTE` |
+| `EXPIRE_EVERY` | `60s` | The pause between the end of a run and the next one |
+| `BATCH_SIZE` | `100` | Reservations per run, 1 to 100 |
+| `RUN_TIMEOUT` | `50s` | The length of a run |
+| `HTTP_TIMEOUT`, `HTTP_ATTEMPTS`, `HTTP_BACKOFF` | `5s`, `3`, `200ms` | Each call to Booking; only network errors, `429` and `5xx` are retried, with exponential backoff and full jitter |
+
+Every call carries the run's `X-Correlation-Id`, and every log line of the run writes it.
 
 ## Branching
 

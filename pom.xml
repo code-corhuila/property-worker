@@ -23,5 +23,7 @@
 
   <modules>
     <module>worker-core</module>
+    <module>worker-adapters</module>
+    <module>worker-app</module>
   </modules>
 </project>
