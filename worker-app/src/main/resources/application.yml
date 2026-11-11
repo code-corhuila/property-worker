@@ -1,0 +1,18 @@
+spring:
+  main:
+    web-application-type: none     # the worker receives no requests
+worker:
+  booking-url: ${BOOKING_URL:http://booking-api:3001}
+  service-token: ${SERVICE_TOKEN:}         # svc-worker, issued by Identity; never versioned
+  expire-every: ${EXPIRE_EVERY:60s}        # delay between the end of a run and the next one
+  pending-ttl: ${PENDING_TTL:15m}          # a Reserva PENDIENTE longer than this is expired (ADR-014)
+  batch-size: ${BATCH_SIZE:100}            # at most this many per run: 1 to 100, the largest page of E-02
+  run-timeout: ${RUN_TIMEOUT:50s}          # a run stops here; the rest waits for the next one
+  http:
+    timeout: ${HTTP_TIMEOUT:5s}            # each call to Booking
+    attempts: ${HTTP_ATTEMPTS:3}           # only network errors, 429 and 5xx are retried
+    backoff: ${HTTP_BACKOFF:200ms}         # exponential, with full jitter
+logging:
+  structured:
+    format:
+      console: ecs                         # one JSON object per line; the MDC adds correlationId
